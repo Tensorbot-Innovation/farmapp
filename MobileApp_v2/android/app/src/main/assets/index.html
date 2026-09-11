@@ -42,9 +42,11 @@
         <h1 class="header-main-title" id="headerFarmTitle">Samposhi Farm</h1>
       </div>
       <button class="header-action-btn" id="btnConnectionMode" onclick="toggleConnectionMode()" title="Switch Local / Remote Connection">
-        <svg class="outline-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-          <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+        <svg class="outline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
         </svg>
         <span class="notif-badge-dot" id="headerConnDot"></span>
       </button>
@@ -348,10 +350,8 @@
         <div class="timeline-labels">
           <span>00:00</span>
           <span id="lblMornRamp">04:30 Dawn</span>
-          <span id="lblMornPeak">05:00 - 08:00 Morn</span>
-          <span id="lblMornFade">08:30 Gap</span>
-          <span id="lblEveRamp">16:15 Eve Dawn</span>
-          <span id="lblEvePeak">17:00 - 21:00 Eve</span>
+          <span id="lblMornPeak">05:00 Morn</span>
+          <span id="lblEvePeak">17:00 Eve</span>
           <span id="lblEveFade">21:45 Night</span>
           <span>23:59</span>
         </div>
@@ -380,16 +380,16 @@
 
           <div class="schedule-grid-3">
             <div class="form-field">
-              <label>Full Light Start</label>
-              <input type="time" id="inputMornStart" class="styled-input" value="05:00" oninput="updateTimelinePreview()">
+              <label>Start Time</label>
+              <input type="time" id="inputMornStart" class="styled-input schedule-time-input" value="05:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
-              <label>Full Light End</label>
-              <input type="time" id="inputMornEnd" class="styled-input" value="08:00" oninput="updateTimelinePreview()">
+              <label>End Time</label>
+              <input type="time" id="inputMornEnd" class="styled-input schedule-time-input" value="08:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
               <label>Ramp (min)</label>
-              <input type="number" id="inputMornRamp" class="styled-input" min="0" max="120" value="30" oninput="updateTimelinePreview()">
+              <input type="number" id="inputMornRamp" class="styled-input schedule-ramp-input" min="0" max="120" value="30" oninput="updateTimelinePreview()">
             </div>
           </div>
           <div id="mornHelperTxt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -414,16 +414,16 @@
 
           <div class="schedule-grid-3">
             <div class="form-field">
-              <label>Full Light Start</label>
-              <input type="time" id="inputEveStart" class="styled-input" value="17:00" oninput="updateTimelinePreview()">
+              <label>Start Time</label>
+              <input type="time" id="inputEveStart" class="styled-input schedule-time-input" value="17:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
-              <label>Full Light End</label>
-              <input type="time" id="inputEveEnd" class="styled-input" value="21:00" oninput="updateTimelinePreview()">
+              <label>End Time</label>
+              <input type="time" id="inputEveEnd" class="styled-input schedule-time-input" value="21:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
               <label>Ramp (min)</label>
-              <input type="number" id="inputEveRamp" class="styled-input" min="0" max="120" value="45" oninput="updateTimelinePreview()">
+              <input type="number" id="inputEveRamp" class="styled-input schedule-ramp-input" min="0" max="120" value="45" oninput="updateTimelinePreview()">
             </div>
           </div>
           <div id="eveHelperTxt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -448,9 +448,9 @@
 
           <div class="ldr-slider-container">
             <input type="range" id="inputLdrPctSlider" class="ldr-range-slider" min="0" max="100" value="44" oninput="onLdrSliderChange(this.value)">
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <input type="number" id="inputLdrPct" class="ldr-pct-badge" min="0" max="100" value="44" oninput="onLdrNumberChange(this.value)">
-              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">%</span>
+            <div class="ldr-input-badge">
+              <input type="number" id="inputLdrPct" class="ldr-val-input" min="0" max="100" value="44" oninput="onLdrNumberChange(this.value)">
+              <span class="ldr-val-unit">%</span>
             </div>
           </div>
           <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -740,13 +740,14 @@
           </button>
         </div>
 
-        <button class="btn-purple-primary" onclick="saveRemoteMqttConfig()">
+        <button class="btn-purple-primary" onclick="saveRemoteMqttConfig()" style="margin-bottom: 10px;">
           Save Configuration
         </button>
-        <button type="button" class="btn-outline-action" onclick="openRemoteConnectionModal()" style="margin-top: 10px; width: 100%; justify-content: center;">
-          <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-            <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+        <button type="button" class="btn-outline-action" onclick="openRemoteConnectionModal()">
+          <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+            <polyline points="6 9 9 12 6 15"></polyline>
+            <line x1="12" y1="15" x2="16" y2="15"></line>
           </svg>
           Remote Connection Terminal & Diagnostics
         </button>
@@ -1328,13 +1329,14 @@
       <div class="sheet-header-row">
         <div>
           <h2 class="sheet-title" style="display: flex; align-items: center; gap: 8px;">
-            <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-              <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+            <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+              <polyline points="6 9 9 12 6 15"></polyline>
+              <line x1="12" y1="15" x2="16" y2="15"></line>
             </svg>
-            Remote Connection
+            Terminal & Diagnostics
           </h2>
-          <div class="sheet-sub text-light">Cloud MQTT Broker & Remote Terminal</div>
+          <div class="sheet-sub text-light">Cloud MQTT Broker & Remote Console</div>
         </div>
         <button class="modal-close-icon-btn" onclick="closeRemoteConnectionModal()" title="Cancel & Close">
           <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1433,10 +1435,10 @@
             <span class="terminal-dot dot-yellow"></span>
             <span class="terminal-dot dot-green"></span>
           </div>
-          <span class="terminal-title">REMOTE CLOUD TERMINAL</span>
+          <span class="terminal-title">DIAGNOSTICS TERMINAL</span>
           <div style="display: flex; gap: 6px;">
-            <button class="terminal-action-btn" onclick="pingRemoteBroker()" title="Ping Broker">Ping</button>
-            <button class="terminal-action-btn" onclick="clearRemoteTerminal()" title="Clear Output">Clear</button>
+            <button type="button" class="terminal-action-btn" onclick="pingRemoteBroker()" title="Ping Broker">Ping</button>
+            <button type="button" class="terminal-action-btn" onclick="clearRemoteTerminal()" title="Clear Output">Clear</button>
           </div>
         </div>
         <div class="terminal-body" id="remoteTerminalLogs">
@@ -1445,10 +1447,12 @@
       </div>
 
       <!-- Single Primary Action Button (No bottom cancel button) -->
-      <button class="btn-purple-primary" onclick="saveAndConnectRemoteModal()">
-        <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-          <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+      <button class="btn-purple-primary" onclick="saveAndConnectRemoteModal()" style="margin-bottom: 0;">
+        <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
         </svg>
         <span id="btnSaveRemoteTxt">Save & Connect Remote</span>
       </button>

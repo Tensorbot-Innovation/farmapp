@@ -198,6 +198,7 @@ p, span, div, label, input, select, button {
 .tab-content {
   display: none;
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: 40px;
 }
 
 .tab-content.active {

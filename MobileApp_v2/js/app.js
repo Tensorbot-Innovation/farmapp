@@ -742,10 +742,10 @@ function updateTimelinePreview() {
   const lblEF = document.getElementById('lblEveFade');
 
   if (lblMR) lblMR.textContent = `${LightingEngine.minToTimeStr(mRampStart)} Dawn`;
-  if (lblMP) lblMP.textContent = `${LightingEngine.minToTimeStr(mS)}-${LightingEngine.minToTimeStr(mE)} Morn`;
+  if (lblMP) lblMP.textContent = `${LightingEngine.minToTimeStr(mS)} Morn`;
   if (lblMF) lblMF.textContent = `${LightingEngine.minToTimeStr(mRampEnd)} Gap`;
-  if (lblER) lblER.textContent = `${LightingEngine.minToTimeStr(eRampStart)} Eve Dawn`;
-  if (lblEP) lblEP.textContent = `${LightingEngine.minToTimeStr(eS)}-${LightingEngine.minToTimeStr(eE)} Eve`;
+  if (lblER) lblER.textContent = `${LightingEngine.minToTimeStr(eRampStart)} Eve`;
+  if (lblEP) lblEP.textContent = `${LightingEngine.minToTimeStr(eS)} Eve`;
   if (lblEF) lblEF.textContent = `${LightingEngine.minToTimeStr(eRampEnd)} Night`;
 
   const summary = document.getElementById('scheduleSummaryTxt');

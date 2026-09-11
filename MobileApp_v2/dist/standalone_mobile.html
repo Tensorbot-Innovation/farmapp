@@ -222,6 +222,7 @@ p, span, div, label, input, select, button {
 .tab-content {
   display: none;
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: 40px;
 }
 
 .tab-content.active {
@@ -1108,17 +1109,66 @@ p, span, div, label, input, select, button {
   color: #FFFFFF;
   border: none;
   border-radius: 14px;
-  padding: 13px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  height: 52px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
   font-family: var(--font-family);
   cursor: pointer;
   box-shadow: 0 4px 14px var(--primary-purple-glow);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .btn-purple-primary:active {
   transform: scale(0.97);
+}
+
+/* Secondary Outline Action Button (Terminal & Diagnostics) */
+.btn-outline-action {
+  width: 100%;
+  box-sizing: border-box;
+  background: #FAF5FF;
+  border: 1.5px solid #DDD6FE;
+  border-radius: 14px;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #7C3AED;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0;
+  margin-bottom: 4px;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.05);
+}
+
+.btn-outline-action:hover {
+  background: #F3E8FF;
+  border-color: #C4B5FD;
+  color: #6D28D9;
+}
+
+.btn-outline-action:active {
+  transform: scale(0.98);
+  background: #EDE9FE;
+  border-color: #A78BFA;
+}
+
+.btn-outline-action svg {
+  color: #7C3AED;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -1522,13 +1572,15 @@ p, span, div, label, input, select, button {
 .timeline-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.68rem;
-  font-weight: 400;
+  align-items: center;
+  font-size: 0.70rem;
+  font-weight: 500;
   color: var(--text-muted);
-  flex-wrap: wrap;
-  gap: 4px;
-  letter-spacing: -0.01em;
-  margin-top: 6px;
+  flex-wrap: nowrap;
+  gap: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .schedule-helper-pill {
@@ -1540,6 +1592,7 @@ p, span, div, label, input, select, button {
   margin-top: 10px;
   line-height: 1.4;
   border: 1px solid rgba(124, 58, 237, 0.12);
+  text-align: center;
 }
 
 .schedule-subcard {
@@ -1563,35 +1616,76 @@ p, span, div, label, input, select, button {
   color: var(--text-main);
 }
 
+/* Perfect 3-Column Schedule Grid Alignment */
 .schedule-grid-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: 1.15fr 1.15fr 0.8fr;
+  gap: 8px;
+  align-items: flex-end;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 360px) {
   .schedule-grid-3 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 0.75fr;
+    gap: 6px;
   }
 }
 
 .schedule-grid-3 .form-field {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
 }
 
 .schedule-grid-3 label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  height: 20px;
+  display: flex;
+  align-items: flex-end;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule-grid-3 .styled-input {
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  font-size: 0.90rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 48px !important;
+  border-radius: 12px !important;
+}
+
+.schedule-grid-3 input[type="time"].schedule-time-input {
+  padding: 0 4px !important;
+}
+
+.schedule-grid-3 input[type="number"].schedule-ramp-input {
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.schedule-grid-3 input[type="number"].schedule-ramp-input::-webkit-outer-spin-button,
+.schedule-grid-3 input[type="number"].schedule-ramp-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .ldr-slider-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .ldr-range-slider {
@@ -1615,16 +1709,48 @@ p, span, div, label, input, select, button {
   border: 2px solid #FFFFFF;
 }
 
-.ldr-pct-badge {
+.ldr-input-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #FFFFFF;
   border: 1px solid var(--border-subtle);
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-weight: 500;
-  font-size: 0.88rem;
-  color: var(--text-main);
-  min-width: 54px;
+  border-radius: 12px;
+  padding: 0 8px;
+  height: 42px;
+  width: 76px;
+  min-width: 76px;
+  box-sizing: border-box;
+}
+
+.ldr-val-input {
+  width: 38px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
   text-align: center;
+  color: var(--text-main);
+  font-family: var(--font-family);
+  padding: 0;
+  margin: 0;
+  -moz-appearance: textfield;
+}
+.ldr-val-input::-webkit-outer-spin-button,
+.ldr-val-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ldr-val-unit {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+#tab-schedule {
+  padding-bottom: 110px;
 }
 
 /* ==========================================================================
@@ -2166,20 +2292,21 @@ p, span, div, label, input, select, button {
 }
 
 .terminal-window {
-  background: #0F172A;
+  background: #0B1120;
   border: 1px solid #1E293B;
   border-radius: 14px;
   overflow: hidden;
   margin: 12px 0 16px 0;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .terminal-header {
   background: #1E293B;
-  padding: 6px 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .terminal-dots {
@@ -2199,48 +2326,58 @@ p, span, div, label, input, select, button {
 
 .terminal-title {
   font-family: var(--font-mono, monospace);
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: #94A3B8;
 }
 
 .terminal-action-btn {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #CBD5E1;
-  font-size: 0.64rem;
-  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #E2E8F0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 3px 9px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
+  font-family: var(--font-family);
 }
 
 .terminal-action-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+
+.terminal-action-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .terminal-body {
   padding: 10px 12px;
-  max-height: 125px;
+  max-height: 130px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   font-family: 'JetBrains Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 0.7rem;
-  line-height: 1.45;
+  font-size: 0.72rem;
+  line-height: 1.5;
   color: #E2E8F0;
+  background: #0B1120;
 }
 
 .terminal-log-line {
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   word-break: break-all;
 }
 
-.log-time { color: #64748B; margin-right: 6px; }
-.log-sys { color: #38BDF8; }
-.log-net { color: #A855F7; }
-.log-ok { color: #4ADE80; }
-.log-warn { color: #FBBF24; }
-.log-err { color: #F87171; }
+.log-time { color: #64748B; margin-right: 6px; font-size: 0.68rem; }
+.log-sys { color: #38BDF8; font-weight: 500; }
+.log-net { color: #C084FC; font-weight: 500; }
+.log-ok { color: #4ADE80; font-weight: 500; }
+.log-warn { color: #FBBF24; font-weight: 500; }
+.log-err { color: #F87171; font-weight: 500; }
 
 .header-action-btn.remote-active {
   border-color: #C084FC;
@@ -2410,9 +2547,11 @@ p, span, div, label, input, select, button {
         <h1 class="header-main-title" id="headerFarmTitle">Samposhi Farm</h1>
       </div>
       <button class="header-action-btn" id="btnConnectionMode" onclick="toggleConnectionMode()" title="Switch Local / Remote Connection">
-        <svg class="outline-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-          <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+        <svg class="outline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
         </svg>
         <span class="notif-badge-dot" id="headerConnDot"></span>
       </button>
@@ -2716,10 +2855,8 @@ p, span, div, label, input, select, button {
         <div class="timeline-labels">
           <span>00:00</span>
           <span id="lblMornRamp">04:30 Dawn</span>
-          <span id="lblMornPeak">05:00 - 08:00 Morn</span>
-          <span id="lblMornFade">08:30 Gap</span>
-          <span id="lblEveRamp">16:15 Eve Dawn</span>
-          <span id="lblEvePeak">17:00 - 21:00 Eve</span>
+          <span id="lblMornPeak">05:00 Morn</span>
+          <span id="lblEvePeak">17:00 Eve</span>
           <span id="lblEveFade">21:45 Night</span>
           <span>23:59</span>
         </div>
@@ -2748,16 +2885,16 @@ p, span, div, label, input, select, button {
 
           <div class="schedule-grid-3">
             <div class="form-field">
-              <label>Full Light Start</label>
-              <input type="time" id="inputMornStart" class="styled-input" value="05:00" oninput="updateTimelinePreview()">
+              <label>Start Time</label>
+              <input type="time" id="inputMornStart" class="styled-input schedule-time-input" value="05:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
-              <label>Full Light End</label>
-              <input type="time" id="inputMornEnd" class="styled-input" value="08:00" oninput="updateTimelinePreview()">
+              <label>End Time</label>
+              <input type="time" id="inputMornEnd" class="styled-input schedule-time-input" value="08:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
               <label>Ramp (min)</label>
-              <input type="number" id="inputMornRamp" class="styled-input" min="0" max="120" value="30" oninput="updateTimelinePreview()">
+              <input type="number" id="inputMornRamp" class="styled-input schedule-ramp-input" min="0" max="120" value="30" oninput="updateTimelinePreview()">
             </div>
           </div>
           <div id="mornHelperTxt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -2782,16 +2919,16 @@ p, span, div, label, input, select, button {
 
           <div class="schedule-grid-3">
             <div class="form-field">
-              <label>Full Light Start</label>
-              <input type="time" id="inputEveStart" class="styled-input" value="17:00" oninput="updateTimelinePreview()">
+              <label>Start Time</label>
+              <input type="time" id="inputEveStart" class="styled-input schedule-time-input" value="17:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
-              <label>Full Light End</label>
-              <input type="time" id="inputEveEnd" class="styled-input" value="21:00" oninput="updateTimelinePreview()">
+              <label>End Time</label>
+              <input type="time" id="inputEveEnd" class="styled-input schedule-time-input" value="21:00" oninput="updateTimelinePreview()">
             </div>
             <div class="form-field">
               <label>Ramp (min)</label>
-              <input type="number" id="inputEveRamp" class="styled-input" min="0" max="120" value="45" oninput="updateTimelinePreview()">
+              <input type="number" id="inputEveRamp" class="styled-input schedule-ramp-input" min="0" max="120" value="45" oninput="updateTimelinePreview()">
             </div>
           </div>
           <div id="eveHelperTxt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -2816,9 +2953,9 @@ p, span, div, label, input, select, button {
 
           <div class="ldr-slider-container">
             <input type="range" id="inputLdrPctSlider" class="ldr-range-slider" min="0" max="100" value="44" oninput="onLdrSliderChange(this.value)">
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <input type="number" id="inputLdrPct" class="ldr-pct-badge" min="0" max="100" value="44" oninput="onLdrNumberChange(this.value)">
-              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">%</span>
+            <div class="ldr-input-badge">
+              <input type="number" id="inputLdrPct" class="ldr-val-input" min="0" max="100" value="44" oninput="onLdrNumberChange(this.value)">
+              <span class="ldr-val-unit">%</span>
             </div>
           </div>
           <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;" class="text-light">
@@ -3108,13 +3245,14 @@ p, span, div, label, input, select, button {
           </button>
         </div>
 
-        <button class="btn-purple-primary" onclick="saveRemoteMqttConfig()">
+        <button class="btn-purple-primary" onclick="saveRemoteMqttConfig()" style="margin-bottom: 10px;">
           Save Configuration
         </button>
-        <button type="button" class="btn-outline-action" onclick="openRemoteConnectionModal()" style="margin-top: 10px; width: 100%; justify-content: center;">
-          <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-            <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+        <button type="button" class="btn-outline-action" onclick="openRemoteConnectionModal()">
+          <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+            <polyline points="6 9 9 12 6 15"></polyline>
+            <line x1="12" y1="15" x2="16" y2="15"></line>
           </svg>
           Remote Connection Terminal & Diagnostics
         </button>
@@ -3696,13 +3834,14 @@ p, span, div, label, input, select, button {
       <div class="sheet-header-row">
         <div>
           <h2 class="sheet-title" style="display: flex; align-items: center; gap: 8px;">
-            <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-              <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+            <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+              <polyline points="6 9 9 12 6 15"></polyline>
+              <line x1="12" y1="15" x2="16" y2="15"></line>
             </svg>
-            Remote Connection
+            Terminal & Diagnostics
           </h2>
-          <div class="sheet-sub text-light">Cloud MQTT Broker & Remote Terminal</div>
+          <div class="sheet-sub text-light">Cloud MQTT Broker & Remote Console</div>
         </div>
         <button class="modal-close-icon-btn" onclick="closeRemoteConnectionModal()" title="Cancel & Close">
           <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3801,10 +3940,10 @@ p, span, div, label, input, select, button {
             <span class="terminal-dot dot-yellow"></span>
             <span class="terminal-dot dot-green"></span>
           </div>
-          <span class="terminal-title">REMOTE CLOUD TERMINAL</span>
+          <span class="terminal-title">DIAGNOSTICS TERMINAL</span>
           <div style="display: flex; gap: 6px;">
-            <button class="terminal-action-btn" onclick="pingRemoteBroker()" title="Ping Broker">Ping</button>
-            <button class="terminal-action-btn" onclick="clearRemoteTerminal()" title="Clear Output">Clear</button>
+            <button type="button" class="terminal-action-btn" onclick="pingRemoteBroker()" title="Ping Broker">Ping</button>
+            <button type="button" class="terminal-action-btn" onclick="clearRemoteTerminal()" title="Clear Output">Clear</button>
           </div>
         </div>
         <div class="terminal-body" id="remoteTerminalLogs">
@@ -3813,10 +3952,12 @@ p, span, div, label, input, select, button {
       </div>
 
       <!-- Single Primary Action Button (No bottom cancel button) -->
-      <button class="btn-purple-primary" onclick="saveAndConnectRemoteModal()">
-        <svg class="outline-icon outline-icon-sm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 71 4 L 92 25 H 79 V 56 C 79 65 73 71 64 71 H 36 V 49 H 63 V 25 H 50 Z"></path>
-          <path d="M 29 96 L 8 75 H 21 V 44 C 21 35 27 29 36 29 H 64 V 51 H 37 V 75 H 50 Z"></path>
+      <button class="btn-purple-primary" onclick="saveAndConnectRemoteModal()" style="margin-bottom: 0;">
+        <svg class="outline-icon outline-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
         </svg>
         <span id="btnSaveRemoteTxt">Save & Connect Remote</span>
       </button>
@@ -4746,10 +4887,10 @@ function updateTimelinePreview() {
   const lblEF = document.getElementById('lblEveFade');
 
   if (lblMR) lblMR.textContent = `${LightingEngine.minToTimeStr(mRampStart)} Dawn`;
-  if (lblMP) lblMP.textContent = `${LightingEngine.minToTimeStr(mS)}-${LightingEngine.minToTimeStr(mE)} Morn`;
+  if (lblMP) lblMP.textContent = `${LightingEngine.minToTimeStr(mS)} Morn`;
   if (lblMF) lblMF.textContent = `${LightingEngine.minToTimeStr(mRampEnd)} Gap`;
-  if (lblER) lblER.textContent = `${LightingEngine.minToTimeStr(eRampStart)} Eve Dawn`;
-  if (lblEP) lblEP.textContent = `${LightingEngine.minToTimeStr(eS)}-${LightingEngine.minToTimeStr(eE)} Eve`;
+  if (lblER) lblER.textContent = `${LightingEngine.minToTimeStr(eRampStart)} Eve`;
+  if (lblEP) lblEP.textContent = `${LightingEngine.minToTimeStr(eS)} Eve`;
   if (lblEF) lblEF.textContent = `${LightingEngine.minToTimeStr(eRampEnd)} Night`;
 
   const summary = document.getElementById('scheduleSummaryTxt');
