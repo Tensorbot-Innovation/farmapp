@@ -59,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Load internal offline bundle
+        // Load internal offline bundle with fresh cache
+        webView.clearCache(true);
         webView.loadUrl("file:///android_asset/index.html");
     }
 
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         );
         swipeRefreshLayout.setOnRefreshListener(() -> {
             if (webView != null) {
+                webView.clearCache(true);
                 webView.reload();
             }
             swipeRefreshLayout.setRefreshing(false);
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Hardware acceleration & rendering
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         // Remove horizontal/vertical scrollbars for sleek app feel
         webView.setHorizontalScrollBarEnabled(false);

@@ -1467,12 +1467,25 @@
   <script src="js/scanner.js"></script>
   <script src="js/app.js"></script>
 
-  <!-- PWA Service Worker Registration -->
+  <!-- PWA Service Worker Registration & WebView Cache Purge -->
   <script>
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
+    } else if ('serviceWorker' in navigator) {
+      // In native Android WebView (file:///android_asset/), unregister legacy service workers
+      // and clear CacheStorage so fresh APK assets are always loaded
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(key => caches.delete(key));
+        });
+      }
     }
   </script>
 </body>

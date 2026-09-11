@@ -1,0 +1,8 @@
+.DS_Store
+*.pyc
+__pycache__/
+MobileApp_v2/android/.gradle/
+MobileApp_v2/android/build/
+MobileApp_v2/android/app/build/
+MobileApp_v2/android/local.properties
+dist-apk/

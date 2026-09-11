@@ -304,6 +304,10 @@ window.fetch = async function(url, options) {
       sendCloudMqttCommand({ cmd: "all", on: body.on });
     } else if (url.includes('/api/auto-all')) {
       sendCloudMqttCommand({ cmd: "all_auto" });
+    } else if (url.includes('/api/zone/add')) {
+      sendCloudMqttCommand(Object.assign({ cmd: "zone_add" }, body));
+    } else if (url.includes('/api/zone/delete') || url.includes('/api/zone/remove')) {
+      sendCloudMqttCommand(Object.assign({ cmd: "zone_delete" }, body));
     } else if (url.includes('/api/zone')) {
       if (body.auto !== undefined) {
         if (body.auto) {
@@ -321,6 +325,8 @@ window.fetch = async function(url, options) {
       sendCloudMqttCommand({ cmd: "slave_pwm", nodeId: body.nodeId, pwm: pVal });
     } else if (url.includes('/api/fixture/pwm')) {
       sendCloudMqttCommand({ cmd: "slave_pwm", nodeId: body.nodeId, pwm: body.pwm !== undefined ? body.pwm : 0 });
+    } else if (url.includes('/api/fixture/update')) {
+      sendCloudMqttCommand(Object.assign({ cmd: "fixture_update" }, body));
     } else if (url.includes('/api/strobe') || url.includes('/api/identify-mac') || url.includes('/api/fixture/strobe')) {
       sendCloudMqttCommand(Object.assign({ cmd: "strobe" }, body));
     } else if (url.includes('/api/pair-mac')) {
@@ -335,6 +341,10 @@ window.fetch = async function(url, options) {
       sendCloudMqttCommand(Object.assign({ cmd: "update_config" }, body));
     } else if (url.includes('/api/ldr/calibrate')) {
       sendCloudMqttCommand(Object.assign({ cmd: "ldr_calibrate" }, body));
+    } else if (url.includes('/api/reboot')) {
+      sendCloudMqttCommand({ cmd: "reboot" });
+    } else if (url.includes('/api/reset')) {
+      sendCloudMqttCommand({ cmd: "reset" });
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });

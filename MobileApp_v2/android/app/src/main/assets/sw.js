@@ -1,5 +1,5 @@
-// Samposhi Mobile App Service Worker v2.1
-const CACHE_NAME = 'samposhi-pwa-v2.1';
+// Samposhi Mobile App Service Worker v2.3
+const CACHE_NAME = 'samposhi-pwa-v2.3';
 const STATIC_ASSETS = [
   './',
   './index.html',
