@@ -21,5 +21,5 @@ This repository includes a pre-configured **GitHub Actions** CI/CD pipeline in [
 2. **Download Your APK**:
    - Once the build finishes (approx. 60–90 seconds, green checkmark), click on the completed run.
    - Scroll down to the **Artifacts** section at the bottom.
-   - Click **`SamposhiFarm-Android-APK`** to download `SamposhiFarm-v2.0.apk`.
+   - Click **`SamposhiFarm-Android-APK`** to download `SamposhiFarm-v2.2.apk`.
    - Install it directly on any Android device!

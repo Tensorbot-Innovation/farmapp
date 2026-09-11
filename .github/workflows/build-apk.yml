@@ -35,7 +35,7 @@ jobs:
 
       - name: Synchronize Web Assets and Generate Icons
         run: |
-          python3 MobileApp_v2/build_deployable.py --esp32
+          python3 MobileApp_v2/build_deployable.py --android
           python3 MobileApp_v2/android/sync_assets.py
 
       - name: Ensure Gradle Wrapper is Ready
