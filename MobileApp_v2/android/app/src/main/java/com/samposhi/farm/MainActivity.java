@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupSwipeRefresh();
         setupWebView();
+        bindToWifiNetworkIfAvailable();
 
         // Modern Android back navigation handling
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -62,6 +63,27 @@ public class MainActivity extends AppCompatActivity {
         // Load internal offline bundle with fresh cache
         webView.clearCache(true);
         webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    private void bindToWifiNetworkIfAvailable() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+                if (cm != null) {
+                    android.net.NetworkRequest request = new android.net.NetworkRequest.Builder()
+                            .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                            .build();
+                    cm.requestNetwork(request, new android.net.ConnectivityManager.NetworkCallback() {
+                        @Override
+                        public void onAvailable(@NonNull android.net.Network network) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                cm.bindProcessToNetwork(network);
+                            }
+                        }
+                    });
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     private void setupSwipeRefresh() {
@@ -89,6 +111,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(true);
         settings.setAllowUniversalAccessFromFileURLs(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
 
         // Responsive viewport & zoom
         settings.setUseWideViewPort(true);
