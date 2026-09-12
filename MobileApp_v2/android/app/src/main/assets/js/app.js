@@ -287,27 +287,87 @@ function stopCloudMqtt() {
   renderSettingsTab();
 }
 
-function getTargetGatewayHost() {
-  let saved = (localStorage.getItem('samposhi_local_ip') || '').trim();
-  if (saved) {
-    if (saved.startsWith('http://')) saved = saved.slice(7);
-    if (saved.startsWith('https://')) saved = saved.slice(8);
-    if (saved.endsWith('/')) saved = saved.slice(0, -1);
-    return saved;
-  }
+let activeWorkingGatewayHost = null;
+let isProbingGateways = false;
+
+function getCandidateGatewayHosts() {
+  const list = [];
+  // 1. Current origin hostname if running directly on device web server
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const hn = window.location.hostname;
     if (hn && hn !== 'localhost' && hn !== '127.0.0.1' && !hn.includes('.github.io') && !hn.includes('netlify.app') && !hn.includes('vercel.app')) {
-      return hn;
+      list.push(hn);
     }
   }
-  if (typeof farmState !== 'undefined' && farmState.staConnected && farmState.staIP && farmState.staIP !== '0.0.0.0') {
-    return farmState.staIP;
+  // 2. Active working host confirmed in this session
+  if (activeWorkingGatewayHost && !list.includes(activeWorkingGatewayHost)) {
+    list.push(activeWorkingGatewayHost);
   }
-  return '192.168.4.1';
+  // 3. User configured Local Gateway IP in modal (if set)
+  const saved = (localStorage.getItem('samposhi_local_ip') || '').trim();
+  if (saved) {
+    let clean = saved.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    if (clean && !list.includes(clean)) list.push(clean);
+  }
+  // 4. Farm Wi-Fi Router IP (Station IP from ESP32)
+  const staIp = (localStorage.getItem('samposhi_sta_ip') || (typeof farmState !== 'undefined' && farmState.staIP) || '').trim();
+  if (staIp && staIp !== '0.0.0.0' && !list.includes(staIp)) {
+    list.push(staIp);
+  }
+  // 5. mDNS hostname on Farm Wi-Fi
+  if (!list.includes('samposhi.local')) {
+    list.push('samposhi.local');
+  }
+  // 6. Default Master Hotspot AP IP
+  if (!list.includes('192.168.4.1')) {
+    list.push('192.168.4.1');
+  }
+  return list;
+}
+
+function getTargetGatewayHost() {
+  if (activeWorkingGatewayHost) return activeWorkingGatewayHost;
+  const candidates = getCandidateGatewayHosts();
+  return candidates[0] || '192.168.4.1';
 }
 
 const _nativeFetch = window.fetch;
+
+async function autoProbeCandidateGateways() {
+  if (isProbingGateways) return;
+  isProbingGateways = true;
+  try {
+    const candidates = getCandidateGatewayHosts();
+    const current = getTargetGatewayHost();
+    const toProbe = candidates.filter(c => c !== current);
+
+    for (const host of toProbe) {
+      try {
+        const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const tid = ctrl ? setTimeout(() => ctrl.abort(), 1800) : null;
+        const url = `http://${host}/api/status?_probe=${Date.now()}`;
+        const res = await _nativeFetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+        if (tid) clearTimeout(tid);
+        if (res.ok) {
+          const data = await res.json();
+          activeWorkingGatewayHost = host;
+          localStorage.setItem('samposhi_local_ip', host);
+          farmState.masterOnline = true;
+          applyGatewayData(data);
+          renderAll();
+          logRemoteTerminal(`Auto-connected to Master at http://${host}`, 'ok');
+          if (typeof showToast === 'function') {
+            showToast(`Connected to Master at ${host}`);
+          }
+          break;
+        }
+      } catch (e) {}
+    }
+  } finally {
+    isProbingGateways = false;
+  }
+}
+
 window.fetch = async function(url, options) {
   const activeMode = (typeof farmState !== 'undefined' && farmState.connectionMode) || localStorage.getItem('samposhi_conn_mode') || 'local';
 
@@ -326,7 +386,13 @@ window.fetch = async function(url, options) {
 
   // A. LOCAL MODE: Direct cleartext HTTP to Gateway
   if (activeMode === 'local') {
-    return _nativeFetch(reqUrl, options);
+    const p = _nativeFetch(reqUrl, options);
+    p.then(r => {
+      if (r && r.ok && isApiCall) {
+        activeWorkingGatewayHost = getTargetGatewayHost();
+      }
+    }).catch(() => {});
+    return p;
   }
 
   // B. REMOTE CLOUD MODE: Cloud MQTT Interception + Concurrent Local Fast Dispatch
@@ -408,6 +474,10 @@ window.fetch = async function(url, options) {
       sendCloudMqttCommand({ cmd: "reboot" });
     } else if (url.includes('/api/reset')) {
       sendCloudMqttCommand({ cmd: "reset" });
+    } else if (url.includes('/api/master/ota-url')) {
+      sendCloudMqttCommand({ cmd: "ota_master_url", url: body.url });
+    } else if (url.includes('/api/slave/ota-url')) {
+      sendCloudMqttCommand({ cmd: "ota_slave_url", nodeId: body.nodeId, url: body.url });
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -447,6 +517,9 @@ function applyGatewayData(data) {
   delete copy.zones;
   delete copy.slaves;
   farmState = Object.assign({}, farmState, copy);
+  if (data.staConnected && data.staIP && data.staIP !== '0.0.0.0') {
+    localStorage.setItem('samposhi_sta_ip', data.staIP);
+  }
   parseMasterTime(data);
 }
 
@@ -511,7 +584,7 @@ function getAmbientLightLevelPct() {
 async function fetchStatus(force = false) {
   if (!force && pausePollingTimer) return;
   const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), 5000) : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
   try {
     const fetchOpts = { cache: 'no-store' };
     if (controller) fetchOpts.signal = controller.signal;
@@ -527,6 +600,8 @@ async function fetchStatus(force = false) {
         farmState.masterOnline = false;
         renderHeader();
       }
+      const activeMode = (typeof farmState !== 'undefined' && farmState.connectionMode) || localStorage.getItem('samposhi_conn_mode') || 'local';
+      if (activeMode === 'local') autoProbeCandidateGateways();
     }
   } catch (e) {
     if (timeoutId) clearTimeout(timeoutId);
@@ -534,6 +609,8 @@ async function fetchStatus(force = false) {
       farmState.masterOnline = false;
       renderHeader();
     }
+    const activeMode = (typeof farmState !== 'undefined' && farmState.connectionMode) || localStorage.getItem('samposhi_conn_mode') || 'local';
+    if (activeMode === 'local') autoProbeCandidateGateways();
   }
 }
 
@@ -943,7 +1020,7 @@ function renderSettingsTab() {
     rSsid.value = farmState.routerSSID;
   }
 
-  // Section 3: Farm WiFi Live Status Indicator
+  // Section 3: Farm WiFi Live Status Indicator & IP details
   const staBadge = document.getElementById('staStatusBadge');
   const staTxt = document.getElementById('staStatusTxt');
   if (staBadge && staTxt) {
@@ -956,6 +1033,20 @@ function renderSettingsTab() {
     } else {
       staBadge.className = "status-pill offline";
       staTxt.textContent = "Disconnected";
+    }
+  }
+
+  const staInfoBox = document.getElementById('staNetworkInfoBox');
+  const staIpVal = document.getElementById('staIpValue');
+  const staLink = document.getElementById('staDirectLink');
+  if (staInfoBox && staIpVal) {
+    if (farmState.staConnected && farmState.staIP && farmState.staIP !== '0.0.0.0') {
+      staInfoBox.style.display = 'block';
+      staIpVal.textContent = farmState.staIP;
+      if (staLink) staLink.href = `http://${farmState.staIP}`;
+      localStorage.setItem('samposhi_sta_ip', farmState.staIP);
+    } else {
+      staInfoBox.style.display = 'none';
     }
   }
 
@@ -1200,19 +1291,49 @@ async function saveFarmWifiConfig() {
   const rSsid = document.getElementById('cfgRouterSSID').value.trim();
   const rPass = document.getElementById('cfgRouterPass').value;
 
+  // 1. Validation: If enabled, SSID must not be blank
+  if (staEn && !rSsid) {
+    showToast("Please enter Farm WiFi SSID", true);
+    const ssidInput = document.getElementById('cfgRouterSSID');
+    if (ssidInput) ssidInput.focus();
+    return;
+  }
+
   const payload = {
     staEnabled: staEn,
     routerSSID: rSsid
   };
+
+  // 2. Check if user changed the SSID
+  const prevSsid = (farmState.routerSSID || '').trim();
+  const isNewSsid = (rSsid !== prevSsid);
+
   if (rPass.length > 0) {
+    // User provided a password
     payload.routerPass = rPass;
+  } else if (isNewSsid && staEn) {
+    // New SSID entered with empty password field
+    const isOpenNet = confirm(`No password entered for "${rSsid}". Is this an open Wi-Fi network without a password?`);
+    if (!isOpenNet) {
+      const passInput = document.getElementById('cfgRouterPass');
+      if (passInput) passInput.focus();
+      showToast("Please enter the Wi-Fi password", true);
+      return;
+    }
+    // Explicitly send empty string so Master clears old password for open network
+    payload.routerPass = "";
   }
 
   farmState.staEnabled = staEn;
   farmState.routerSSID = rSsid;
+  if (staEn) {
+    farmState.staConnected = false; // Optimistic update: show Connecting state immediately
+  }
 
   renderSettingsTab();
   renderHeroBanners();
+
+  showToast(staEn ? "Connecting to Farm WiFi..." : "Disabling Farm WiFi...");
 
   try {
     const res = await fetch('/api/config', {
@@ -1221,11 +1342,18 @@ async function saveFarmWifiConfig() {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast("Farm Internet WiFi saved to Master!");
+      showToast(staEn ? "Farm WiFi settings saved! Connecting..." : "Farm WiFi disabled");
     } else {
       showToast("Failed to save to master", true);
     }
-    await fetchStatus();
+    // Clear password input field after submission for security
+    const passInput = document.getElementById('cfgRouterPass');
+    if (passInput) passInput.value = "";
+
+    // Poll status quickly to reflect the newly acquired IP and active connection
+    setTimeout(fetchStatus, 2000);
+    setTimeout(fetchStatus, 5000);
+    setTimeout(fetchStatus, 10000);
   } catch (e) {
     showToast("Farm Internet WiFi saved locally");
   }
@@ -1381,7 +1509,18 @@ function openRemoteConnectionModal() {
   if (userEl) userEl.value = farmState.mqttUser || localStorage.getItem('samposhi_mqtt_user') || "";
   if (passEl) passEl.value = localStorage.getItem('samposhi_mqtt_pass') || "";
   if (enEl) enEl.checked = farmState.mqttEnabled !== false;
-  if (localIpEl) localIpEl.value = localStorage.getItem('samposhi_local_ip') || '192.168.4.1';
+  if (localIpEl) localIpEl.value = getTargetGatewayHost();
+  const staPresetBtn = document.getElementById('btnPresetStaIp');
+  if (staPresetBtn) {
+    const staIp = (farmState.staIP || localStorage.getItem('samposhi_sta_ip') || '').trim();
+    if (staIp && staIp !== '0.0.0.0') {
+      staPresetBtn.style.display = 'inline-block';
+      staPresetBtn.textContent = `Farm Wi-Fi (${staIp})`;
+      staPresetBtn.onclick = () => setModalLocalIpPreset(staIp);
+    } else {
+      staPresetBtn.style.display = 'none';
+    }
+  }
 
   // Sync mode pills and sections
   const mode = farmState.connectionMode || 'remote';
@@ -1393,7 +1532,7 @@ function openRemoteConnectionModal() {
   const terminal = document.getElementById('remoteTerminalLogs');
   if (terminal && terminal.children.length === 0) {
     logRemoteTerminal("Terminal initialized.", "sys");
-    const savedIp = localStorage.getItem('samposhi_local_ip') || '192.168.4.1';
+    const savedIp = getTargetGatewayHost();
     logRemoteTerminal(`Local Gateway: http://${savedIp}`, "ok");
     logRemoteTerminal(`Target Broker: ${farmState.mqttBroker || 'broker.emqx.io'}:${farmState.mqttPort || 1883}`, "net");
     logRemoteTerminal(`Resolved WS URL: ${getMqttWsUrl()}`, "net");
@@ -1406,6 +1545,31 @@ function openRemoteConnectionModal() {
     } else {
       logRemoteTerminal(`Status: ${farmState.connectionMode === 'remote' ? 'CONNECTING...' : 'DISCONNECTED'}`, "warn");
     }
+  }
+}
+
+function setModalLocalIpPreset(ip) {
+  let targetIp = ip;
+  if (!targetIp) {
+    targetIp = (farmState.staIP || localStorage.getItem('samposhi_sta_ip') || '').trim();
+  }
+  const ipInput = document.getElementById('modalLocalGatewayIp');
+  if (ipInput && targetIp) {
+    ipInput.value = targetIp;
+    ipInput.focus();
+  }
+}
+
+function applyStaIpAsGateway() {
+  const staIp = (farmState.staIP || localStorage.getItem('samposhi_sta_ip') || '').trim();
+  if (staIp && staIp !== '0.0.0.0') {
+    activeWorkingGatewayHost = staIp;
+    localStorage.setItem('samposhi_local_ip', staIp);
+    const ipInput = document.getElementById('modalLocalGatewayIp');
+    if (ipInput) ipInput.value = staIp;
+    if (typeof showToast === 'function') showToast(`Gateway switched to Farm Router IP: ${staIp}`);
+    fetchStatus(true);
+    renderSettingsTab();
   }
 }
 
@@ -1463,8 +1627,10 @@ async function saveAndConnectRemoteModal() {
   if (farmState.connectionMode === 'local') {
     const ipInput = document.getElementById('modalLocalGatewayIp');
     if (ipInput) {
-      const val = ipInput.value.trim() || '192.168.4.1';
+      let val = (ipInput.value || '').trim() || '192.168.4.1';
+      val = val.replace(/^https?:\/\//, '').replace(/\/$/, '');
       localStorage.setItem('samposhi_local_ip', val);
+      activeWorkingGatewayHost = val;
       logRemoteTerminal(`Gateway IP configured to: http://${val}`, "ok");
       showToast(`Gateway IP set to ${val}`);
     }
@@ -3067,15 +3233,146 @@ function uploadSlaveFirmware() {
   xhr.send(formData);
 }
 
+async function flashMasterFromCloudUrl() {
+  const urlInp = document.getElementById('masterCloudOtaUrlInput');
+  const btn = document.getElementById('btnMasterCloudOta');
+  const statusDiv = document.getElementById('masterCloudOtaStatus');
+  const url = urlInp ? urlInp.value.trim() : '';
+
+  if (!url || !url.startsWith('http')) {
+    showToast("Please enter a valid HTTP or HTTPS firmware .bin URL", true);
+    return;
+  }
+
+  if (!confirm(`Download and flash Master firmware from:\n${url}\n\nGateway will download over farm Wi-Fi and reboot.`)) return;
+
+  btn.disabled = true;
+  btn.textContent = "⏳ Dispatching Cloud OTA...";
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--text-muted)';
+    statusDiv.innerHTML = `<b>☁ Dispatching update request...</b> Master Gateway downloading from cloud.`;
+  }
+
+  try {
+    const res = await fetch('/api/master/ota-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (statusDiv) {
+        statusDiv.style.color = '#10B981';
+        statusDiv.innerHTML = `<b>✅ Flash Succeeded!</b> Master Gateway is now rebooting...`;
+      }
+      showToast("Master Cloud OTA Success! Rebooting...", false);
+      btn.textContent = "✅ Update Complete";
+      setTimeout(() => { window.location.reload(); }, 8000);
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Update Master from Cloud";
+      if (statusDiv) {
+        statusDiv.style.color = '#EF4444';
+        statusDiv.innerHTML = `<b>❌ Failed:</b> ${data.msg || "Check serial console."}`;
+      }
+      showToast(data.msg || "Master Cloud OTA failed", true);
+    }
+  } catch (e) {
+    if (activeMode === 'cloud') {
+      showToast("Cloud OTA command dispatched via MQTT broker", false);
+      btn.textContent = "📡 Dispatched to Cloud";
+      if (statusDiv) {
+        statusDiv.style.color = '#3B82F6';
+        statusDiv.innerHTML = `<b>📡 Dispatched via Cloud MQTT.</b> Master is downloading and flashing.`;
+      }
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Update Master from Cloud";
+      if (statusDiv) {
+        statusDiv.style.color = '#EF4444';
+        statusDiv.innerHTML = `<b>❌ Error:</b> Network timeout or disconnect.`;
+      }
+      showToast("Failed to communicate with Gateway", true);
+    }
+  }
+}
+
 async function flashSlaveFromCloudUrl() {
   const nodeId = parseInt(document.getElementById('slaveOtaTargetNode').value, 10);
   const urlInp = document.getElementById('slaveOtaUrlInput');
+  const btn = document.getElementById('btnSlaveCloudOta');
+  const statusDiv = document.getElementById('slaveCloudOtaStatus');
   const url = urlInp ? urlInp.value.trim() : '';
+
   if (!url || !url.startsWith('http')) {
-    showToast("Please enter a valid HTTP/HTTPS firmware .bin URL", true);
+    showToast("Please enter a valid HTTP or HTTPS firmware .bin URL", true);
     return;
   }
-  showToast(`Cloud update dispatched for Fixture #${nodeId}`);
+
+  if (!confirm(`Flash Fixture #${nodeId} from Cloud URL:\n${url}?`)) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Downloading & Flashing...";
+  }
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--text-muted)';
+    statusDiv.innerHTML = `<b>☁ Streaming firmware to Fixture #${nodeId}...</b> Please wait.`;
+  }
+
+  try {
+    const res = await fetch('/api/slave/ota-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeId: nodeId, url: url })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (statusDiv) {
+        statusDiv.style.color = '#10B981';
+        statusDiv.innerHTML = `<b>✅ Success!</b> Fixture #${nodeId} updated successfully.`;
+      }
+      if (btn) btn.textContent = "✅ Fixture Updated";
+      showToast(`Fixture #${nodeId} updated successfully!`, false);
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Update Fixture from Cloud";
+        }
+      }, 4000);
+    } else {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Update Fixture from Cloud";
+      }
+      if (statusDiv) {
+        statusDiv.style.color = '#EF4444';
+        statusDiv.innerHTML = `<b>❌ Failed:</b> ${data.msg || "Check console"}`;
+      }
+      showToast(data.msg || "Fixture Cloud OTA failed", true);
+    }
+  } catch (e) {
+    if (activeMode === 'cloud') {
+      showToast(`Cloud OTA command dispatched for Fixture #${nodeId}`, false);
+      if (btn) btn.textContent = "📡 Dispatched to Cloud";
+      if (statusDiv) {
+        statusDiv.style.color = '#3B82F6';
+        statusDiv.innerHTML = `<b>📡 Dispatched via Cloud MQTT.</b> Master is downloading & streaming to fixture.`;
+      }
+    } else {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Update Fixture from Cloud";
+      }
+      if (statusDiv) {
+        statusDiv.style.color = '#EF4444';
+        statusDiv.innerHTML = `<b>❌ Error:</b> Network error or gateway busy.`;
+      }
+      showToast("Network error communicating with Gateway", true);
+    }
+  }
 }
 
 async function strobeNode(nodeId) {
